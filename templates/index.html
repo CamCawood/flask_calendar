@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar App</title>
+
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='calendar_icon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <main class="calendar-page">
+
+        <section class="calendar-card">
+
+            <div class="calendar-header">
+
+                <form action="/previous-month" method="POST">
+                    <input type="hidden" name="current_month" value="{{ current_month }}">
+                    <input type="hidden" name="current_year" value="{{ current_year }}">
+                    <button class="arrow-button" type="submit">&larr;</button>
+                </form>
+
+                <button class="month-title" type="button" onclick="openDatePopup()" aria-label="Change month and year">
+                    <span>{{ current_month_name }}</span>
+                    <small>{{ current_year }}</small>
+                </button>
+
+                <form action="/next-month" method="POST">
+                    <input type="hidden" name="current_month" value="{{ current_month }}">
+                    <input type="hidden" name="current_year" value="{{ current_year }}">
+                    <button class="arrow-button" type="submit">&rarr;</button>
+                </form>
+
+            </div>
+
+            <div class="weekday-row">
+                <div class="weekday-name">Monday</div>
+                <div class="weekday-name">Tuesday</div>
+                <div class="weekday-name">Wednesday</div>
+                <div class="weekday-name">Thursday</div>
+                <div class="weekday-name">Friday</div>
+                <div class="weekday-name">Saturday</div>
+                <div class="weekday-name">Sunday</div>
+            </div>
+
+            <div class="calendar-grid">
+
+                {% for i in current_monthrange %}
+                    <div class="day-cell empty"></div>
+                {% endfor %}
+
+                {% for day in day_week_name_dict %}
+
+                    {% set date_key = "%04d-%02d-%02d"|format(current_year, current_month, day) %}
+                    {% set day_previews = month_previews.get(date_key, []) %}
+
+                    <form class="day-form" action="/select-day" method="POST">
+                        <input type="hidden" name="selected_date" value="{{ date_key }}">
+
+                        <button class="day-cell {% if selected_date == date_key %}selected-cell{% endif %}" type="submit">
+
+                            <span class="day-number {% if day == current_day and todays_month_name == current_month_name and todays_year == current_year %}current-day{% endif %}">
+                                {{ day }}
+                            </span>
+
+                            {% if day_previews|length > 0 %}
+                                <div class="event-preview-list">
+
+                                    {% for event in day_previews[:2] %}
+                                        <div class="event-preview">{{ event.title }}</div>
+                                    {% endfor %}
+
+                                    {% if day_previews|length > 2 %}
+                                        <div class="more-events">{{ day_previews|length - 2 }} More</div>
+                                    {% endif %}
+
+                                </div>
+                            {% endif %}
+
+                        </button>
+                    </form>
+
+                {% endfor %}
+
+                {% for day in remaining_days %}
+                    <div class="day-cell empty"></div>
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+        <aside class="day-details">
+            <h2>Selected Day</h2>
+            <p class="selected-date">{{ selected_date_text }}</p>
+
+            <div class="details-box">
+                <h3>Day Details</h3>
+
+                {% if selected_events|length > 0 %}
+                    <div class="selected-events-list">
+
+                        {% for event in selected_events %}
+                            <div class="selected-event">
+
+                                <strong>{{ event.title }}</strong>
+
+                                {% if event.time %}
+                                    <span>{{ event.time }}</span>
+                                {% endif %}
+
+                                {% if event.description %}
+                                    <p>{{ event.description }}</p>
+                                {% endif %}
+
+                                {% if event.type == "recurring" %}
+                                    <small class="event-type-label">Recurring every year</small>
+                                {% endif %}
+
+                                {% if event.editable %}
+                                    <div class="event-actions">
+                                        <button class="event-edit-button" type="button" onclick="openEditEventPopup('{{ loop.index0 }}')">Edit</button>
+
+                                        <form action="/delete-event" method="POST" onsubmit="return confirm('Are you sure you want to delete this event?');">
+                                            <input type="hidden" name="event_date" value="{{ event.event_date }}">
+                                            <input type="hidden" name="event_index" value="{{ event.event_index }}">
+                                            <input type="hidden" name="return_date" value="{{ selected_date }}">
+                                            <button class="event-delete-button" type="submit">Delete</button>
+                                        </form>
+                                    </div>
+                                {% endif %}
+
+                            </div>
+                        {% endfor %}
+
+                    </div>
+                {% else %}
+                    <p>No events added yet.</p>
+                {% endif %}
+            </div>
+
+            {% if selected_date %}
+                <button class="add-event-button" type="button" onclick="openEventPopup()">Add Event</button>
+            {% else %}
+                <button class="add-event-button disabled-button" type="button" disabled>Select a day first</button>
+            {% endif %}
+        </aside>
+
+    </main>
+
+    <div class="popup-background" id="datePopup">
+        <div class="date-popup">
+            <h2>Change Date</h2>
+
+            <form action="/change-date" method="POST">
+
+                <label for="month">Month</label>
+                <select name="month" id="month">
+                    <option value="1" {% if current_month == 1 %}selected{% endif %}>January</option>
+                    <option value="2" {% if current_month == 2 %}selected{% endif %}>February</option>
+                    <option value="3" {% if current_month == 3 %}selected{% endif %}>March</option>
+                    <option value="4" {% if current_month == 4 %}selected{% endif %}>April</option>
+                    <option value="5" {% if current_month == 5 %}selected{% endif %}>May</option>
+                    <option value="6" {% if current_month == 6 %}selected{% endif %}>June</option>
+                    <option value="7" {% if current_month == 7 %}selected{% endif %}>July</option>
+                    <option value="8" {% if current_month == 8 %}selected{% endif %}>August</option>
+                    <option value="9" {% if current_month == 9 %}selected{% endif %}>September</option>
+                    <option value="10" {% if current_month == 10 %}selected{% endif %}>October</option>
+                    <option value="11" {% if current_month == 11 %}selected{% endif %}>November</option>
+                    <option value="12" {% if current_month == 12 %}selected{% endif %}>December</option>
+                </select>
+
+                <label for="year">Year</label>
+                <input type="number" name="year" id="year" value="{{ current_year }}">
+
+                <div class="popup-buttons">
+                    <button type="button" onclick="closeDatePopup()">Cancel</button>
+                    <button type="submit">Update</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="popup-background" id="eventPopup">
+        <div class="event-popup">
+            <h2>Add Event</h2>
+
+            <form action="/add-event" method="POST">
+                <input type="hidden" name="event_date" value="{{ selected_date or '' }}">
+
+                <label for="event_type">Event Type</label>
+                <select name="event_type" id="event_type">
+                    <option value="single">Single Event</option>
+                    <option value="recurring">Recurring Every Year</option>
+                </select>
+
+                <label for="title">Title</label>
+                <input type="text" name="title" id="title" placeholder="Event title" required>
+
+                <label for="time">Time</label>
+                <input type="time" name="time" id="time">
+
+                <label for="description">Description</label>
+                <textarea name="description" id="description" placeholder="Event details"></textarea>
+
+                <div class="popup-buttons">
+                    <button type="button" onclick="closeEventPopup()">Cancel</button>
+                    <button type="submit">Save Event</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% for event in selected_events %}
+        {% if event.editable %}
+            <div class="popup-background" id="editEventPopup-{{ loop.index0 }}">
+                <div class="event-popup">
+                    <h2>Edit Event</h2>
+
+                    <form action="/edit-event" method="POST">
+                        <input type="hidden" name="event_date" value="{{ event.event_date }}">
+                        <input type="hidden" name="event_index" value="{{ event.event_index }}">
+
+                        <label for="new_event_date_{{ loop.index0 }}">Date</label>
+                        <input type="date" name="new_event_date" id="new_event_date_{{ loop.index0 }}" value="{{ selected_date }}" required>
+
+                        <label for="edit_event_type_{{ loop.index0 }}">Event Type</label>
+                        <select name="event_type" id="edit_event_type_{{ loop.index0 }}">
+                            <option value="single" {% if event.type == "single" %}selected{% endif %}>Single Event</option>
+                            <option value="recurring" {% if event.type == "recurring" %}selected{% endif %}>Recurring Every Year</option>
+                        </select>
+
+                        <label for="edit_title_{{ loop.index0 }}">Title</label>
+                        <input type="text" name="title" id="edit_title_{{ loop.index0 }}" value="{{ event.title }}" required>
+
+                        <label for="edit_time_{{ loop.index0 }}">Time</label>
+                        <input type="time" name="time" id="edit_time_{{ loop.index0 }}" value="{{ event.time }}">
+
+                        <label for="edit_description_{{ loop.index0 }}">Description</label>
+                        <textarea name="description" id="edit_description_{{ loop.index0 }}">{{ event.description }}</textarea>
+
+                        <div class="popup-buttons">
+                            <button type="button" onclick="closeEditEventPopup('{{ loop.index0 }}')">Cancel</button>
+                            <button type="submit">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+    {% endfor %}
+
+    <script>
+        function openDatePopup() {
+            document.getElementById("datePopup").style.display = "flex";
+        }
+
+        function closeDatePopup() {
+            document.getElementById("datePopup").style.display = "none";
+        }
+
+        function openEventPopup() {
+            document.getElementById("eventPopup").style.display = "flex";
+        }
+
+        function closeEventPopup() {
+            document.getElementById("eventPopup").style.display = "none";
+        }
+
+        function openEditEventPopup(eventNumber) {
+            document.getElementById("editEventPopup-" + eventNumber).style.display = "flex";
+        }
+
+        function closeEditEventPopup(eventNumber) {
+            document.getElementById("editEventPopup-" + eventNumber).style.display = "none";
+        }
+    </script>
+
+</body>
+</html>
