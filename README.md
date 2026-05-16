@@ -29,4 +29,6 @@ This project allows users to browse between months, select individual days, add 
 
 ![Calendar homepage](Calendar_Preview.png)
 
-![Calendar homepage](Calendar_Add_Event.png)
+![Calendar add event](Calendar_Add_Event.png)
+
+![Calendar change day](Calendar_Change_Day.png)
