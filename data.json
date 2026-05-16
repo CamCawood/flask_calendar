@@ -1,0 +1,36 @@
+{
+  "events": {
+    "2026-05-16": [
+      {
+        "type": "single",
+        "title": "Gym",
+        "time": "08:00",
+        "description": "",
+        "completed": false
+      },
+      {
+        "type": "single",
+        "title": "Work",
+        "time": "09:00",
+        "description": "",
+        "completed": false
+      },
+      {
+        "type": "single",
+        "title": "Meeting",
+        "time": "11:00",
+        "description": "",
+        "completed": false
+      }
+    ],
+    "2026-05-17": [
+      {
+        "type": "single",
+        "title": "Dinner",
+        "time": "20:00",
+        "description": "",
+        "completed": false
+      }
+    ]
+  }
+}
